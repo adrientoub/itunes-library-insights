@@ -1,6 +1,6 @@
 #! /usr/bin/env ruby
 
-require './parse'
+require './library_loader'
 require './stats'
 
 def print_usage
@@ -11,7 +11,6 @@ end
 if ARGV.size == 0
   print_usage
 else
-  file = File.read(ARGV[0])
-  tracks = Parse.parse(file)
+  tracks = LibraryLoader.load(ARGV[0])
   Stats.generate_stats(tracks, ARGV[1].to_i || Date.now.year)
 end
