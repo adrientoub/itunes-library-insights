@@ -11,11 +11,12 @@ class Stats
     year_total_duration(v, year)
     find_most_listened_to_duration(v, 10)
     find_most_listened_to_count(v, 10)
-    find_most_listened_to_artists(v, 10)
+    find_most_listened_to_artists_duration(v, 10)
+    find_most_listened_to_artists_count(v, 10)
   end
 
-  def self.find_most_listened_to_artists(songs, limit = nil)
-    puts "#{limit || 'All'} most listened artists:"
+  def self.find_most_listened_to_artists_duration(songs, limit = nil)
+    puts "#{limit || 'All'} most listened artists by duration:"
     duration_artist = Hash.new(0)
     songs.each do |song|
       td = song.total_duration
@@ -26,7 +27,24 @@ class Stats
     end
     i = 0
     duration_artist.sort_by { |k, v| v }.reverse.each do |artist, duration|
-      puts "#{duration/60},#{artist}"
+      puts "#{duration_to_short_string(duration)},#{artist}"
+      i += 1
+      break if i == limit
+    end
+  end
+
+  def self.find_most_listened_to_artists_count(songs, limit = nil)
+    puts "#{limit || 'All'} most listened artists by count:"
+    count_artist = Hash.new(0)
+    songs.each do |song|
+      artists = song.artist.split(/,|;|\/|feat.|ft.|&/i).uniq.map(&:strip)
+      artists.each do |artist|
+        count_artist[artist] += song.read_count
+      end
+    end
+    i = 0
+    count_artist.sort_by { |k, v| v }.reverse.each do |artist, count|
+      puts "#{count},#{artist}"
       i += 1
       break if i == limit
     end
@@ -65,9 +83,18 @@ class Stats
   def self.find_most_listened_to_duration(songs, limit = nil)
     puts "#{limit || 'All'} most listened songs by duration:"
     songs.sort_by(&:total_duration).reverse.each_with_index do |track, i|
-      duration = ActiveSupport::Duration.build(track.total_duration).parts
-      puts "%02d:%02d: #{track.name} - by #{track.artist}" % [duration[:hours], duration[:minutes]]
+      puts "#{duration_to_short_string(track.total_duration)}: #{track.name} - by #{track.artist}"
       break if i == limit
     end
+  end
+
+  def self.duration_to_short_string(duration)
+    duration_parts = ActiveSupport::Duration.build(duration).parts
+    str = ''
+    if duration_parts[:days] > 0
+      str << '%02d:' % duration_parts[:days]
+    end
+    str << '%02d:%02d' % [duration_parts[:hours], duration_parts[:minutes]]
+    str
   end
 end
