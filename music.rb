@@ -6,7 +6,7 @@ class Music
     @artist = artist
     @album = album
     @duration = duration
-    @read_count = read_count
+    @read_count = read_count || 0
     @date_added = date_added
   end
 
