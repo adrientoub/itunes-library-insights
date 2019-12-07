@@ -15,25 +15,31 @@ class LibraryLoader
         playlist['Playlist Items'].each do |item|
           v = tracks[item['Track ID'].to_s]
           if v['Album'] != 'Mémos vocaux'
-            songs << Music.new(v['Name'], v['Artist'], v['Album'], v['Total Time'] / 1000, v['Play Count'], v['Date Added']) rescue p v
+            songs << Music.from_plist(v) rescue p v
           end
         end
       elsif playlist['Audiobooks']
         playlist['Playlist Items'].each do |item|
           v = tracks[item['Track ID'].to_s]
-          books << Music.new(v['Name'], v['Artist'], v['Album'], v['Total Time'] / 1000, v['Play Count'], v['Date Added']) rescue p v
+          books << Music.from_plist(v) rescue p v
         end
       end
     end
 
-    { tracks: songs, books: books }
+    {
+      tracks: songs,
+      books: books,
+    }
   end
 
   def self.load(filename)
     json_path = "#{filename}.json"
     if File.exists?(json_path)
       library = JSON.parse(File.read(json_path))
-      { tracks: library['tracks'].map { |t| to_track(t) }, books: library['books'].map { |t| to_track(t) } }
+      {
+        tracks: to_track_list(library['tracks']),
+        books: to_track_list(library['books']),
+      }
     else
       file = File.read(filename)
       tracks = parse(file)
@@ -42,8 +48,10 @@ class LibraryLoader
     end
   end
 
-  def self.to_track(track)
-    Music.new(track['name'], track['artist'], track['album'], track['duration'], track['read_count'], DateTime.parse(track['date_added']))
+  def self.to_track_list(tracks)
+    tracks.map do |t|
+      Music.to_track(t)
+    end
   end
 
   def self.dump(tracks, json_path)
