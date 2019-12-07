@@ -4,15 +4,22 @@ class Stats
   def self.generate_stats(songs, year)
     date = DateTime.new(year, 1, 1)
     end_year = DateTime.new(year + 1, 1, 1)
-    v = songs.select do |track|
+    v = songs[:tracks].select do |track|
       track.date_added > date && track.date_added < end_year
     end
     puts "#{v.count} new songs in #{year}"
-    year_total_duration(v, year)
+    display_total_duration(v, "music from #{year}")
     find_most_listened_to_duration(v, 10)
     find_most_listened_to_count(v, 10)
     find_most_listened_to_artists_duration(v, 10)
     find_most_listened_to_artists_count(v, 10)
+
+    books = songs[:books]
+    unless books.empty?
+      display_total_books_duration(books, 'books')
+      find_longest_listened_album_duration(books, 10)
+      find_most_listened_to_artists_duration(books, 10)
+    end
   end
 
   def self.find_most_listened_to_artists_duration(songs, limit = nil)
@@ -20,14 +27,14 @@ class Stats
     duration_artist = Hash.new(0)
     songs.each do |song|
       td = song.total_duration
-      artists = song.artist.split(/,|;|\/|feat.|ft.|&/i).uniq.map(&:strip)
+      artists = song.artist.split(/,|;|\/|feat.|ft.|&|-/i).uniq.map(&:strip)
       artists.each do |artist|
         duration_artist[artist] += td
       end
     end
     i = 0
     duration_artist.sort_by { |k, v| v }.reverse.each do |artist, duration|
-      puts "#{duration_to_short_string(duration)},#{artist}"
+      puts "#{duration_to_short_string(duration)},#{artist}" if duration > 0
       i += 1
       break if i == limit
     end
@@ -50,13 +57,38 @@ class Stats
     end
   end
 
-  def self.year_total_duration(songs, year)
+  def self.find_longest_listened_album_duration(songs, limit = nil)
+    puts "#{limit || 'All'} longest listened albums by duration:"
+    duration_album = Hash.new(0)
+    artist_album = {}
+    songs.each do |song|
+      duration_album[song.album] += song.duration if song.read_count > 0
+      artist_album[song.album] = song.artist
+    end
+    i = 0
+    duration_album.sort_by { |k, v| v }.reverse.each do |album, duration|
+      puts "#{duration_to_short_string(duration)},#{album},#{artist_album[album]}"
+      i += 1
+      break if i == limit
+    end
+  end
+
+  def self.display_total_duration(songs, type)
     total_duration = 0
     songs.each do |k|
       total_duration += k.total_duration
     end
     duration_string = seconds_to_s(total_duration)
-    puts "Listened to music from #{year} during #{duration_string}"
+    puts "Listened to #{type} during #{duration_string}"
+  end
+
+  def self.display_total_books_duration(songs, type)
+    total_duration = 0
+    songs.each do |k|
+      total_duration += k.duration if k.read_count > 0
+    end
+    duration_string = seconds_to_s(total_duration)
+    puts "Listened to #{type} during #{duration_string}"
   end
 
   def self.seconds_to_s(duration)
@@ -91,10 +123,12 @@ class Stats
   def self.duration_to_short_string(duration)
     duration_parts = ActiveSupport::Duration.build(duration).parts
     str = ''
-    if duration_parts[:days] > 0
-      str << '%02d:' % duration_parts[:days]
+    if duration_parts[:weeks] > 0
+      str << '%02dw%02dd' % [duration_parts[:weeks], duration_parts[:days]]
+    elsif duration_parts[:days] > 0
+      str << '%02dd' % duration_parts[:days]
     end
-    str << '%02d:%02d' % [duration_parts[:hours], duration_parts[:minutes]]
+    str << '%02dh%02d' % [duration_parts[:hours], duration_parts[:minutes]]
     str
   end
 end
