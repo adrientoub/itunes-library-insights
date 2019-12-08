@@ -53,6 +53,6 @@ class Music
               track['duration'],
               track['read_count'],
               DateTime.parse(track['date_added']),
-              track['read_date'] ? DateTime.parse(track['read_date']) : nil)
+              track['play_date'] ? DateTime.parse(track['play_date']) : nil)
   end
 end
