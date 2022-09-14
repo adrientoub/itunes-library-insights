@@ -11,7 +11,7 @@ Currently extracts information about **Music** and **Audiobooks** consumption.
 ## Setup
 
 To run this you need:
-- Ruby 2.6
+- Ruby 3.0
 - Bundler
 
 ```sh
