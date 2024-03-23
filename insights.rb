@@ -12,5 +12,5 @@ if ARGV.size == 0
   print_usage
 else
   library = LibraryLoader.load(ARGV[0])
-  Stats.generate_stats(library, ARGV[1].to_i || Date.now.year)
+  Stats.generate_stats(library, ARGV[1]&.to_i || DateTime.now.year)
 end
