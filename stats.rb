@@ -28,9 +28,9 @@ class Stats
     unless books.empty?
       display_total_books_duration(books, year)
       puts
-      find_longest_listened_album_duration(books, year, 10)
+      find_longest_listened_album_duration(books, year, 'books', 10)
       puts
-      find_most_listened_to_artists_duration(books, 'books', 10)
+      find_most_listened_to_artists_duration(books, 'authors', 10)
     end
   end
 
@@ -67,7 +67,7 @@ class Stats
     end
   end
 
-  def self.find_longest_listened_album_duration(songs, year, limit = nil)
+  def self.find_longest_listened_album_duration(songs, year, type, limit = nil)
     duration_album = Hash.new(0)
     artist_album = {}
     songs.each do |song|
@@ -75,8 +75,8 @@ class Stats
       artist_album[song.album] = song.artist
     end
     i = 0
-    puts "Listened to #{duration_album.count.green} albums in #{year}"
-    puts "#{[limit, duration_album.count].min || 'All'} longest listened albums by duration:"
+    puts "Listened to #{duration_album.count.green} #{type} in #{year}"
+    puts "#{[limit, duration_album.count].min || 'All'} longest listened #{type} by duration:"
     duration_album.sort_by { |k, v| v }.reverse.each do |album, duration|
       puts "#{duration_to_short_string(duration)},#{album},#{artist_album[album]}"
       i += 1
